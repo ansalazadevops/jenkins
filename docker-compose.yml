@@ -1,0 +1,76 @@
+# ===========================================================================
+# Jenkins controller + Debian 12 SSH agent
+#
+#   jenkins-agent       : Debian 12 slim, runs sshd, holds the PUBLIC key.
+#   jenkins-controller  : Jenkins LTS, holds the PRIVATE key (as a secret),
+#                         auto-configures itself + the agent node via JCasC.
+#
+# Both share a private bridge network, so the controller reaches the agent
+# simply as the host "jenkins-agent" on port 22 (not published to the host).
+# ===========================================================================
+
+services:
+  jenkins-agent-1:
+    <<: &agentCommon
+      build:
+        context: .
+        dockerfile: agent/Dockerfile
+      image: jenkins-debian-agent:latest
+      restart: unless-stopped
+      # Port 22 is only exposed on the internal network, never to the host.
+      expose:
+        - "22"
+      networks:
+        - jenkins-net
+    container_name: jenkins-agent-1
+ 
+  jenkins-agent-2:
+    <<: *agentCommon
+    container_name: jenkins-agent-2
+ 
+  jenkins-agent-3:
+    <<: *agentCommon
+    container_name: jenkins-agent-3
+ 
+  jenkins-agent-4:
+    <<: *agentCommon
+    container_name: jenkins-agent-4
+    
+  jenkins-controller:
+    build:
+      context: .
+      dockerfile: controller/Dockerfile
+    image: jenkins-controller:latest
+    container_name: jenkins-controller
+    restart: unless-stopped
+    ports:
+      - "8080:8080"     # Web UI
+      - "50000:50000"   # Inbound (JNLP) agent port — handy to keep open
+    environment:
+      JENKINS_ADMIN_PASSWORD: "${JENKINS_ADMIN_PASSWORD:-admin}"
+    volumes:
+      - jenkins-data:/var/jenkins_home
+      #- jenkins-data:/home/jenkins/.ssh/authorized_keys:ro 
+    secrets:
+      - jenkins-agent-private-key
+    networks:
+      - jenkins-net
+    depends_on:
+      - jenkins-agent-1
+      - jenkins-agent-2
+      - jenkins-agent-3
+      - jenkins-agent-4
+
+networks:
+  jenkins-net:
+    driver: bridge
+
+volumes:
+  jenkins-data:
+    name: jenkins-data
+
+# Compose mounts this file at /run/secrets/jenkins_agent_private_key (mode 0444),
+# which dodges the UID/permission pitfalls of a plain bind mount.
+secrets:
+  jenkins-agent-private-key:
+    file: ./ssh-keys/jenkins_agent_key

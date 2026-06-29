@@ -1,0 +1,88 @@
+# ==================================================================================================
+# Jenkins Configuration as Code (JCasC)
+#
+# Three things are configured here:
+#   1. A local admin user (password injected from the JENKINS_ADMIN_PASSWORD environment variable).
+#   2. An SSH "username + private key" credential. The private key value is read from the Docker secret 
+#      mounted at /run/secrets/jenkins_agent_private_key — JCasC resolves ${jenkins_agent_private_key} 
+#      to that file's contents.
+#   3. Four permanent agent nodes ("debian-agent-{1..4}") that the controller launches by SSHing into the 
+#      jenkins-agent container using that credential.
+#
+# Secret resolution:
+#   ${JENKINS_ADMIN_PASSWORD}      -> environment variable (compose .env)
+#   ${jenkins_agent_private_key}   -> /run/secrets/jenkins_agent_private_key
+# ==================================================================================================
+jenkins:
+  systemMessage: "Jenkins controller — configured automatically via JCasC"
+
+  # Run builds on the agent, not on the controller (best practice).
+  numExecutors: 0
+  mode: NORMAL
+
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "admin"
+          password: "${JENKINS_ADMIN_PASSWORD}"
+
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+
+  nodes:
+    - permanent:
+        <<: &nodeCommon
+          labelString: "debian linux docker"
+          remoteFS: "/home/jenkins/agent"
+          numExecutors: 2
+          mode: NORMAL
+          retentionStrategy: "always"
+        name: "debian-agent-1"
+        launcher:
+          ssh:
+            <<: &sshCommon
+              port: 22
+              credentialsId: "jenkins-agent-ssh"
+              launchTimeoutSeconds: 60
+              maxNumRetries: 10
+              retryWaitTime: 15
+              sshHostKeyVerificationStrategy:
+                manuallyTrustedKeyVerificationStrategy:
+                  requireInitialManualTrust: false  # <-- This auto-trusts on the first connection              
+            host: "jenkins-agent-1"
+    - permanent:
+        <<: *nodeCommon
+        name: "debian-agent-2"
+        launcher:
+          ssh:
+            <<: *sshCommon
+            host: "jenkins-agent-2"
+    - permanent:
+        <<: *nodeCommon
+        name: "debian-agent-3"
+        launcher:
+          ssh:
+            <<: *sshCommon
+            host: "jenkins-agent-3"
+    - permanent:
+        <<: *nodeCommon
+        name: "debian-agent-4"
+        launcher:
+          ssh:
+            <<: *sshCommon
+            host: "jenkins-agent-4"
+
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - basicSSHUserPrivateKey:
+              scope: GLOBAL
+              id: "jenkins-agent-ssh"
+              username: "jenkins"
+              description: "SSH key used by the controller to reach the Debian agent"
+              privateKeySource:
+                directEntry:
+                  privateKey: "${jenkins-agent-private-key}"

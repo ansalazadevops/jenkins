@@ -1,0 +1,34 @@
+# Core plugins required for this setup.
+# Pinning to "latest" is fine for a lab; pin explicit versions for production.
+
+# --- Jenkins Configuration as Code: drives the whole automated setup ---
+configuration-as-code
+
+# Jenkins blueocean plugin
+blueocean:latest
+
+# --- SSH build agents: lets the controller launch agents over SSH ---
+ssh-slaves
+ssh-credentials
+
+# --- Credentials store (holds the agent SSH private key) ---
+credentials
+credentials-binding
+
+# --- Quality-of-life: pipelines + git so you can actually run jobs ---
+workflow-aggregator
+git
+
+# AWS Credentials Plugin
+aws-credentials:latest
+pipeline-aws:latest
+
+# Azure Credentials Plugins
+azure-credentials:latest
+
+# Google/GCS Credentials Plugin
+google-oauth-plugin:latest
+google-storage-plugin:latest
+
+# Oracle Cloud Infrastructure (OCI) Plugin
+oracle-cloud-infrastructure-compute:latest
