@@ -1,7 +1,7 @@
 # ===========================================================================
-# Jenkins controller + Debian 12 SSH agent
+# Jenkins controller + (4) Debian 13 SSH agents
 #
-#   jenkins-agent       : Debian 12 slim, runs sshd, holds the PUBLIC key.
+#   jenkins-agent       : Debian 13 slim, runs sshd, holds the PUBLIC key.
 #   jenkins-controller  : Jenkins LTS, holds the PRIVATE key (as a secret),
 #                         auto-configures itself + the agent node via JCasC.
 #
@@ -46,13 +46,20 @@ services:
     ports:
       - "8080:8080"     # Web UI
       - "50000:50000"   # Inbound (JNLP) agent port — handy to keep open
-    environment:
+    environment:        # The env vars below are used by the controller's JCasC config (casc.yaml). Source by the .env file.
       JENKINS_ADMIN_PASSWORD: "${JENKINS_ADMIN_PASSWORD:-admin}"
+      CASC_RELOAD_TOKEN: "secure-reload-token"
+      AWS_REGION: "${AWS_REGION}"
+      AWS_DEFAULT_REGION: "${AWS_REGION}"
+      AWS_USERNAME: "${AWS_USERNAME}"
+      AWS_ACCESS_KEY: "${AWS_ACCESS_KEY}"
+      GITHUB_USERNAME: "${GITHUB_USERNAME}"
     volumes:
       - jenkins-data:/var/jenkins_home
-      #- jenkins-data:/home/jenkins/.ssh/authorized_keys:ro 
     secrets:
-      - jenkins-agent-private-key
+      - jenkins-agent-private-key # SSH key for the controller to reach the agent  
+      - github-token              # GitHub personal access token for pipeline checkouts
+      - aws-secret-key            # AWS secret key for the Jenkins AWS plugin
     networks:
       - jenkins-net
     depends_on:
@@ -74,3 +81,7 @@ volumes:
 secrets:
   jenkins-agent-private-key:
     file: ./ssh-keys/jenkins_agent_key
+  github-token:
+    file: ./.secrets/github_token
+  aws-secret-key:
+    file: ./.secrets/aws_secret_key

@@ -1,4 +1,4 @@
-# Jenkins controller with Debian 13 agents 
+# Jenkins controller with (4) Debian 13 agents 
 
 A self-contained Docker setup that brings up a **Jenkins controller** and four
 **Debian 13 slim build agents**, with the controller connecting to the agents
@@ -26,8 +26,8 @@ agent JVM. That means:
 ```
 jenkins-docker/
 ├── docker-compose.yml                  # orchestrates both containers
-├── .env                                # JENKINS_ADMIN_PASSWORD
-├── .gitignore                          # keeps keys/.env out of git
+├── .env                                # JENKINS_ADMIN_PASSWORD, and other env variables
+├── .gitignore                          # keeps keys /.env and ./.secrets/ out of git
 ├── controller/
 │   ├── Dockerfile                      # Jenkins LTS + plugins + JCasC
 │   ├── plugins.txt                     # plugins to pre-install
@@ -36,6 +36,7 @@ jenkins-docker/
 │   └── Dockerfile                      # Debian 13 slim SSH agent
 ├── scripts/
 │   └── generate-keys.sh                # creates the SSH key pair
+├── .secrets/                           # AWS secret key and GitHub Token
 ├── ssh-keys/                           # created in Step 1 (git-ignored)
 │   ├── jenkins_agent_key               # PRIVATE  -> controller (as a secret)
 │   └── jenkins_agent_key.pub           # PUBLIC   -> agent image

@@ -21,6 +21,7 @@ git
 
 # AWS Credentials Plugin
 aws-credentials:latest
+aws-secrets-manager-secret-source:latest
 pipeline-aws:latest
 
 # Azure Credentials Plugins
