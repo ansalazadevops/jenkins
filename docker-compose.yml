@@ -54,6 +54,8 @@ services:
       AWS_USERNAME: "${AWS_USERNAME}"
       AWS_ACCESS_KEY: "${AWS_ACCESS_KEY}"
       GITHUB_USERNAME: "${GITHUB_USERNAME}"
+      # Step 1: Restrict Java Heap size to prevent Jenkins from expanding into swap
+      JAVA_OPTS: "-Xms2g -Xmx2g -XX:+UseG1GC"
     volumes:
       - jenkins-data:/var/jenkins_home
     secrets:
@@ -67,7 +69,11 @@ services:
       - jenkins-agent-2
       - jenkins-agent-3
       - jenkins-agent-4
-
+    # Step 2: Set memory and swap limits for the container
+    mem_limit: 4g
+    memswap_limit: 4g            # Setting mem_limit and memswap_limit to the same value disables swap usage
+    mem_swappiness: 0            # Instructs the kernel to avoid swapping container memory unless absolutely necessary
+    
 networks:
   jenkins-net:
     driver: bridge

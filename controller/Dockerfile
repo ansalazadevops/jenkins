@@ -6,7 +6,7 @@
 # file so the whole instance — admin user, credentials AND the SSH agent node
 # — comes up fully configured with zero clicking.
 # ---------------------------------------------------------------------------
-FROM jenkins/jenkins:lts-jdk21
+FROM jenkins/jenkins:latest
 
 # Skip the interactive setup wizard — JCasC owns the configuration.
 ENV JAVA_OPTS="-Djenkins.install.runSetupWizard=false"

@@ -79,6 +79,15 @@ RUN printf '%s\n' \
         > /etc/ssh/sshd_config.d/10-jenkins-agent.conf && \
     ssh-keygen -A
 
+# Install prerequisites, AWS CLI v2, and clean up
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    unzip \
+  && curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
+  && unzip awscliv2.zip \
+  && ./aws/install \
+  && rm -rf awscliv2.zip aws /var/lib/apt/lists/*
+
 # Expose the SSH port
 EXPOSE 22
 
